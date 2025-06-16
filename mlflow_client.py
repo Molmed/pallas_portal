@@ -1,4 +1,5 @@
 import os
+import pandas as pd
 from dotenv import load_dotenv
 import mlflow
 
@@ -13,7 +14,7 @@ class MlflowClient:
         registered_models = self.client.search_registered_models()
         return [model.name for model in registered_models]
 
-    def predict(self, model_name, input_data):
+    def predict(self, model_name, df):
         """
         Predict using the specified model and input data.
         :param model_name: Name of the registered model.
@@ -21,14 +22,9 @@ class MlflowClient:
         :return: Predictions from the model.
         """
         model_uri = f"models:/{model_name}/latest"
+        ids = df.index
         model = mlflow.sklearn.load_model(model_uri)
-        return model.predict(input_data)
-
-
-
-
-# import mlflow.sklearn
-
-
-# model = mlflow.sklearn.load_model("models:/my_model/Production")
-# predictions = model.predict(input_data)
+        predictions = model.predict(df)
+        # results to df with ids as index
+        results = pd.DataFrame(predictions, index=ids, columns=["prediction"])
+        return results

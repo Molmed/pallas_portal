@@ -23,18 +23,14 @@ def render_form(id, uploader_label):
     slider = form.slider("Error tolerance", 0, 100, 5)
     upload = form.file_uploader(uploader_label, type=["csv"])
 
-
     # Every form must have a submit button.
     submitted = form.form_submit_button("Submit")
     if submitted:
         # get uploaded data as csv
         if upload is not None:
-            with st.spinner("Processing..."):
-                # show_progress()
-                data = pd.read_csv(upload, index_col=0)
-                st.write(data.head())
-                predictions = mlflow_client.predict(model, data)
-                st.write(predictions)
+            data = pd.read_csv(upload, index_col=0)
+            predictions = mlflow_client.predict(model, data)
+            st.write(predictions)
         else:
             st.error("Please upload a file.")
 
