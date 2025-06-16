@@ -13,9 +13,18 @@ class MlflowClient:
         registered_models = self.client.search_registered_models()
         return [model.name for model in registered_models]
 
-        # Print model names
-        for model in registered_models:
-            print(model.name)
+    def predict(self, model_name, input_data):
+        """
+        Predict using the specified model and input data.
+        :param model_name: Name of the registered model.
+        :param input_data: Input data for prediction.
+        :return: Predictions from the model.
+        """
+        model_uri = f"models:/{model_name}/latest"
+        model = mlflow.sklearn.load_model(model_uri)
+        return model.predict(input_data)
+
+
 
 
 # import mlflow.sklearn

@@ -1,5 +1,7 @@
 import streamlit as st
 import time
+import requests
+import pandas as pd
 from mlflow_client import MlflowClient
 
 
@@ -11,22 +13,6 @@ mlflow_client = st.session_state.mlflow
 mlflow_models = st.session_state.mlflow_models
 
 
-def show_progress():
-    'Starting a long computation...'
-
-    # Add a placeholder
-    latest_iteration = st.empty()
-    bar = st.progress(0)
-
-    for i in range(100):
-        # Update the progress bar with each iteration.
-        latest_iteration.text(f'Iteration {i+1}')
-        bar.progress(i + 1)
-        time.sleep(0.1)
-
-    '...and now we\'re done!'
-
-
 def render_form(id, uploader_label):
     form = st.form(id, border=False)
     model = form.selectbox(
@@ -34,19 +20,27 @@ def render_form(id, uploader_label):
         mlflow_models,
         help="Select the model to use for prediction."
     )
-    slider = form.slider("Error tolerance", 0, 100, 90)
-    upload = form.file_uploader(uploader_label, type=["csv", "tsv", "txt"])
+    slider = form.slider("Error tolerance", 0, 100, 5)
+    upload = form.file_uploader(uploader_label, type=["csv"])
 
 
     # Every form must have a submit button.
     submitted = form.form_submit_button("Submit")
     if submitted:
-        st.write("slider", slider)
-        show_progress()
+        # get uploaded data as csv
+        if upload is not None:
+            with st.spinner("Processing..."):
+                # show_progress()
+                data = pd.read_csv(upload, index_col=0)
+                st.write(data.head())
+                predictions = mlflow_client.predict(model, data)
+                st.write(predictions)
+        else:
+            st.error("Please upload a file.")
 
 
 gex_tab, dnam_tab = st.tabs(["Gene Expresssion", "DNA Methylation"])
 with gex_tab:
-    render_form("gex_form", "Upload Gene Expression Data")
+    render_form("gex_form", "Gene expression data")
 with dnam_tab:
-    render_form("dnam_form", "Upload DNA Methylation Data")
+    render_form("dnam_form", "DNA methylation data")
