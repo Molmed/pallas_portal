@@ -22,9 +22,16 @@ class MlflowClient:
         :return: Predictions from the model.
         """
         model_uri = f"models:/{model_name}/latest"
-        ids = df.index
-        model = mlflow.sklearn.load_model(model_uri)
+        df = df.astype("float32")
+        model = mlflow.pyfunc.load_model(model_uri)
         predictions = model.predict(df)
-        # results to df with ids as index
-        results = pd.DataFrame(predictions, index=ids, columns=["prediction"])
+
+        results = pd.Series(
+            predictions,
+            index=df.index,
+            name="prediction",
+            dtype=object,
+        ).to_frame()
+
         return results
+
