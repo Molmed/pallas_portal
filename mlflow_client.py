@@ -14,7 +14,7 @@ class MlflowClient:
         registered_models = self.client.search_registered_models()
         return [model.name for model in registered_models]
 
-    def predict(self, model_name, df):
+    def predict(self, model_name, df, error_tolerance):
         """
         Predict using the specified model and input data.
         :param model_name: Name of the registered model.
@@ -24,7 +24,8 @@ class MlflowClient:
         model_uri = f"models:/{model_name}/latest"
         df = df.astype("float32")
         model = mlflow.pyfunc.load_model(model_uri)
-        predictions = model.predict(df)
+        params = {'error_rate_alpha': error_tolerance / 100}
+        predictions = model.predict(df, params=params)
 
         results = pd.Series(
             predictions,

@@ -6,7 +6,7 @@ PALLAS is a multimodal classifier of molecular subtypes in pediatric acute leuke
 
 ## Install
 
-Run `pip install -e requirements.txt`
+Run `pip install -r requirements.txt`
 
 ## Configure MLflow
 

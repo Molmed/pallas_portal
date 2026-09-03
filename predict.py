@@ -29,7 +29,7 @@ def render_form(id, uploader_label):
         # get uploaded data as csv
         if upload is not None:
             data = pd.read_csv(upload, index_col=0)
-            predictions = mlflow_client.predict(model, data)
+            predictions = mlflow_client.predict(model, data, slider)
             st.write(predictions)
         else:
             st.error("Please upload a file.")
