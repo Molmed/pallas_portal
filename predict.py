@@ -51,11 +51,11 @@ def upset_plot(predictions, color="#9768ac"):
     upset_data.set_index(upset_data.columns.tolist(), inplace=True)
 
     fig = plt.figure()
-    plt.rcParams['font.size'] = 8
+    plt.rcParams['font.size'] = 10
     plot(
         upset_data,
         fig=fig,
-        element_size=25,
+        element_size=30,
         sort_by="cardinality",
         facecolor=color,
         show_counts="%d",
