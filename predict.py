@@ -6,6 +6,7 @@ from upsetplot import plot
 import plotly.graph_objects as go
 from collections import defaultdict
 from pathlib import Path
+import ast
 
 
 st.set_page_config(
@@ -70,6 +71,23 @@ def upset_plot(predictions, color="#9768ac"):
     plt.close(fig)
 
 
+def parse_prediction_classes(value):
+    if isinstance(value, (list, tuple, set, frozenset)):
+        return [normalize_label(item) for item in value]
+
+    value = str(value).strip()
+
+    try:
+        parsed = ast.literal_eval(value)
+    except (ValueError, SyntaxError):
+        parsed = value.split(";")
+
+    if isinstance(parsed, (list, tuple, set, frozenset)):
+        return [normalize_label(item) for item in parsed]
+
+    return [normalize_label(parsed)]
+
+
 def normalize_label(value):
     EMPTY_SET_LABEL = "EMPTY SET"
     if pd.isna(value):
@@ -94,7 +112,8 @@ def sankey(df: pd.DataFrame,
 
     for _, row in df.iterrows():
         true = normalize_label(row[true_col])
-        preds = [normalize_label(p) for p in str(row[pred_col]).split(";")]
+        preds = parse_prediction_classes(row[pred_col])
+
         for pred in preds:
             flow_counts[(true, pred)] += 1
 
@@ -191,6 +210,7 @@ def render_form(form_id, uploader_label):
 
         data = pd.read_csv(upload, index_col=0)
 
+        labels = None
         if labels_upload is not None:
             try:
                 labels = pd.read_csv(labels_upload, index_col=0)
