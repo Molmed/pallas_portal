@@ -12,6 +12,9 @@ if "mlflow" not in st.session_state:
 mlflow_client = st.session_state.mlflow
 mlflow_models = st.session_state.mlflow_models
 
+# Order models as follows: all models containing "latest" first
+mlflow_models = sorted(mlflow_models, key=lambda x: "latest" in x, reverse=True)
+
 
 def render_form(id, uploader_label):
     form = st.form(id, border=False)
@@ -22,6 +25,8 @@ def render_form(id, uploader_label):
     )
     slider = form.slider("Error tolerance", 0, 100, 5)
     upload = form.file_uploader(uploader_label, type=["csv"])
+    labels_upload = form.file_uploader(
+        "If subtypes are known, upload labels (optional)", type=["csv"])
 
     # Every form must have a submit button.
     submitted = form.form_submit_button("Submit")
@@ -29,14 +34,13 @@ def render_form(id, uploader_label):
         # get uploaded data as csv
         if upload is not None:
             data = pd.read_csv(upload, index_col=0)
-            predictions = mlflow_client.predict(model, data, slider)
+            labels = None
+            if labels_upload is not None:
+                labels = pd.read_csv(labels_upload, index_col=0)
+            predictions = mlflow_client.predict(model, data, slider, labels=labels)
             st.write(predictions)
         else:
             st.error("Please upload a file.")
 
 
-gex_tab, dnam_tab = st.tabs(["Gene Expresssion", "DNA Methylation"])
-with gex_tab:
-    render_form("gex_form", "Gene expression data")
-with dnam_tab:
-    render_form("dnam_form", "DNA methylation data")
+render_form("prediction_form", "MLOmix-processed GEX or DNAm data")

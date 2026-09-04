@@ -14,7 +14,7 @@ class MlflowClient:
         registered_models = self.client.search_registered_models()
         return [model.name for model in registered_models]
 
-    def predict(self, model_name, df, error_tolerance):
+    def predict(self, model_name, df, error_tolerance, labels=None):
         """
         Predict using the specified model and input data.
         :param model_name: Name of the registered model.
@@ -33,6 +33,14 @@ class MlflowClient:
             name="prediction",
             dtype=object,
         ).to_frame()
+
+        # If labels are attached, add them to the results
+        if labels is not None:
+            results = results.join(labels, how="left")
+
+        # Rename class to "known subtype"
+        if "class" in results.columns:
+            results.rename(columns={"class": "known subtype"}, inplace=True)
 
         return results
 
