@@ -83,6 +83,7 @@ def render_form(form_id, uploader_label):
                 "If subtypes are known, upload labels (optional)",
                 type=["csv"],
             )
+            plot_color = st.color_picker("Plot color", "#9768ac")
             submitted = st.form_submit_button("Submit")
 
     with output_column:
@@ -108,7 +109,7 @@ def render_form(form_id, uploader_label):
         )
 
         st.write(predictions)
-        upset_plot(predictions)
+        upset_plot(predictions, color=plot_color)
 
 
 render_form("prediction_form", "MLOmix-processed GEX or DNAm data")
