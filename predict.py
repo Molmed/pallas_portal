@@ -50,16 +50,16 @@ def upset_plot(predictions, color="#9768ac"):
     upset_data = upset_data.loc[:, upset_data.any(axis=0)]
     upset_data.set_index(upset_data.columns.tolist(), inplace=True)
 
-    fig = plt.figure(figsize=(8, 3))
+    fig = plt.figure()
     plt.rcParams['font.size'] = 8
     plot(
         upset_data,
         fig=fig,
-        element_size=15,
+        element_size=25,
         sort_by="cardinality",
         facecolor=color,
         show_counts="%d",
-        show_percentages="{:.0%}"
+        show_percentages=False
     )
     plt.tight_layout()
 
