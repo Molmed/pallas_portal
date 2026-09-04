@@ -3,6 +3,9 @@ import pandas as pd
 from mlflow_client import MlflowClient
 import matplotlib.pyplot as plt
 from upsetplot import plot
+import plotly.graph_objects as go
+from collections import defaultdict
+from pathlib import Path
 
 
 st.set_page_config(
@@ -67,6 +70,98 @@ def upset_plot(predictions, color="#9768ac"):
     plt.close(fig)
 
 
+def normalize_label(value):
+    EMPTY_SET_LABEL = "EMPTY SET"
+    if pd.isna(value):
+        return EMPTY_SET_LABEL
+    value = str(value).strip()
+    if value == "" or value.lower() == "nan":
+        return EMPTY_SET_LABEL
+    return value
+
+
+def sankey(df: pd.DataFrame,
+           true_col: str = "true_label",
+           pred_col: str = "prediction_sets",
+           title: str = "Conformal prediction sets"
+           ) -> go.Figure:
+
+    palette_path = Path(__file__).resolve().parent / "conf" / "class_colors.tsv"
+    palette_df = pd.read_csv(palette_path, sep="\t", header=None, names=["class", "color"], index_col=0)
+
+    # Count flows: (true_label, predicted_label) → count
+    flow_counts: dict[tuple[str, str], int] = defaultdict(int)
+
+    for _, row in df.iterrows():
+        true = normalize_label(row[true_col])
+        preds = [normalize_label(p) for p in str(row[pred_col]).split(";")]
+        for pred in preds:
+            flow_counts[(true, pred)] += 1
+
+    true_labels = sorted({k[0] for k in flow_counts})
+    pred_labels = sorted({k[1] for k in flow_counts})
+
+    # Right-side node labels get a suffix so identical names don't collapse
+    suffix = " "
+    pred_labels_display = [f"{p}{suffix}" for p in pred_labels]
+
+    all_labels = true_labels + pred_labels_display
+    label_index = {label: i for i, label in enumerate(all_labels)}
+
+    sources, targets, values = [], [], []
+    for (true, pred), count in flow_counts.items():
+        sources.append(label_index[true])
+        targets.append(label_index[f"{pred}{suffix}"])
+        values.append(count)
+
+    # generate palette from the palette_df
+    palette = palette_df["color"].tolist()
+    node_colors = [palette[i % len(palette)] for i in range(len(all_labels))]
+
+    # Extend palette so all "(pred)" nodes have the same color as their corresponding true label node
+    for i, label in enumerate(all_labels):
+        if label.endswith(suffix):
+            true_label = label[:-len(suffix)]  # remove suffix
+            if true_label in true_labels:
+                true_index = true_labels.index(true_label)
+                node_colors[i] = node_colors[true_index]
+
+    def hex_to_rgba(hex_color, alpha=0.8):
+        hex_color = hex_color.lstrip("#")
+        r = int(hex_color[0:2], 16)
+        g = int(hex_color[2:4], 16)
+        b = int(hex_color[4:6], 16)
+        return f"rgba({r},{g},{b},{alpha})"
+
+    link_colors = [hex_to_rgba(node_colors[s], 0.5) for s in sources]
+
+    fig = go.Figure(go.Sankey(
+        arrangement="snap",
+        node=dict(
+            pad=15,
+            thickness=15,
+            line = dict(color = "black", width = 0.5),
+            label=all_labels,
+            color=node_colors,
+        ),
+        link=dict(
+            source=sources,
+            target=targets,
+            value=values,
+            color=link_colors  # color links based on source node
+        ),
+    ))
+
+    fig.update_layout(
+        title_text=title,
+        title_font=dict(size=20),
+        height=700 + 40 * max(len(true_labels), len(pred_labels)),
+        margin=dict(l=20, r=20, t=60, b=20),
+        font=dict(family="Arial, sans-serif", size=16, color="black")
+    )
+    st.plotly_chart(fig, use_container_width=True)
+
+
 def render_form(form_id, uploader_label):
     form_column, output_column = st.columns([1, 2], gap="large")
 
@@ -95,11 +190,19 @@ def render_form(form_id, uploader_label):
             return
 
         data = pd.read_csv(upload, index_col=0)
-        labels = (
-            pd.read_csv(labels_upload, index_col=0)
-            if labels_upload is not None
-            else None
-        )
+
+        if labels_upload is not None:
+            try:
+                labels = pd.read_csv(labels_upload, index_col=0)
+            except Exception as e:
+                st.error(f"Error reading labels file: {e}")
+                return
+            # Build sankey
+            sankey_data = pd.DataFrame({
+                "true_label": labels.iloc[:, 0],
+                "prediction_sets": mlflow_client.predict(model, data, slider)["prediction"]
+            })
+            sankey(sankey_data, title="True vs predicted subtypes")
 
         predictions = mlflow_client.predict(
             model,
