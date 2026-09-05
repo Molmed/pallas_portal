@@ -239,20 +239,23 @@ def render_form(form_id, uploader_label):
     form_column, output_column = st.columns([1, 2], gap="large")
 
     with form_column:
-        st.subheader("Acute leukemia subtype classification")
+        st.subheader("Acute leukemia classification")
         with st.form(form_id, border=False):
             model = st.selectbox(
                 "Select a model",
                 mlflow_models,
                 help="Select the model to use for prediction.",
             )
-            slider = st.slider("Error tolerance α", 0, 100, 5)
+            tolerance_column, color_column = st.columns([5, 1])
+            with tolerance_column:
+                slider = st.slider("Error tolerance α", 0, 100, 5)
+            with color_column:
+                plot_color = st.color_picker("Plot color", "#9768ac")
             upload = st.file_uploader(uploader_label, type=["csv"])
             labels_upload = st.file_uploader(
                 "If subtypes are known, upload labels (optional)",
                 type=["csv"],
             )
-            plot_color = st.color_picker("Plot color", "#9768ac")
             submitted = st.form_submit_button("Submit")
 
     if not submitted:
