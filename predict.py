@@ -123,17 +123,17 @@ def prediction_sets_summary(predictions, labels=None):
     summary = [
         {
             "Statistic": "Certain sets (size=1)",
-            "Total": certain_count,
+            "Total": str(certain_count),
             "Percentage": percentage(certain_count),
         },
         {
             "Statistic": "Uncertain sets (size >= 2)",
-            "Total": uncertain_count,
+            "Total": str(uncertain_count),
             "Percentage": percentage(uncertain_count),
         },
         {
             "Statistic": "Empty sets (size=0)",
-            "Total": empty_count,
+            "Total": str(empty_count),
             "Percentage": percentage(empty_count),
         },
     ]
@@ -150,19 +150,16 @@ def prediction_sets_summary(predictions, labels=None):
         return True
 
     if labels is not None:
-        true_labels = labels.iloc[:, 0].map(normalize_label)
-        labeled_rows = true_labels.map(is_valid_label)
-        false_negatives = sum(
-            true_label not in prediction_set
-            for true_label, prediction_set, is_labeled in zip(
-                true_labels,
-                prediction_sets,
-                labeled_rows,
-            )
-            if is_labeled
-        )
-        labeled_count = int(labeled_rows.sum())
-        fnr = false_negatives / labeled_count if labeled_count else 0.0
+        negs = 0
+        # Loop through each label
+        for true_label, predicted_set in zip(labels.iloc[:, 0], prediction_sets):
+            # If the true label is valid and not in the predicted set, increment FNR
+            if is_valid_label(true_label) and true_label not in predicted_set:
+                negs += 1
+
+        # Calculate the overall false negative rate (FNR)
+        fnr = negs / len(labels) if len(labels) > 0 else 0.0
+
         summary.append({
             "Statistic": "Overall False Negative Rate (FNR)",
             "Total": "-",
@@ -262,7 +259,7 @@ def sankey(df: pd.DataFrame,
         margin=dict(l=20, r=20, t=60, b=20),
         font=dict(family="Arial, sans-serif", size=16, color="black")
     )
-    st.plotly_chart(fig, use_container_width=True)
+    st.plotly_chart(fig, width="stretch")
 
 
 def render_form(form_id, uploader_label):
@@ -318,7 +315,7 @@ def render_form(form_id, uploader_label):
         st.subheader("Summary")
         st.dataframe(
             prediction_sets_summary(predictions, labels),
-            use_container_width=True,
+            width="stretch",
             hide_index=True,
             height=250
         )
@@ -327,7 +324,7 @@ def render_form(form_id, uploader_label):
         st.subheader("Conformal prediction sets")
         st.dataframe(
             predictions,
-            use_container_width=True,
+            width="stretch",
         )
 
         st.subheader("Conformal prediction set membership")
