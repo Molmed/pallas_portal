@@ -161,9 +161,10 @@ def prediction_sets_summary(predictions, labels=None):
         fnr = negs / len(labels) if len(labels) > 0 else 0.0
 
         summary.append({
-            "Statistic": "Overall False Negative Rate (FNR)",
+            "Statistic": "False Negative Rate (FNR)*",
             "Total": "-",
             "Percentage": f"{fnr:.1%}",
+            "Note": "* FNR is calculated only for cases of known and recognized subtype."
         })
 
     return pd.DataFrame(summary)
@@ -214,17 +215,15 @@ def sankey(df: pd.DataFrame,
         targets.append(label_index[f"{pred}{suffix}"])
         values.append(count)
 
-    # generate palette from the palette_df
-    palette = palette_df["color"].tolist()
-    node_colors = [palette[i % len(palette)] for i in range(len(all_labels))]
-
-    # Extend palette so all "(pred)" nodes have the same color as their corresponding true label node
-    for i, label in enumerate(all_labels):
-        if label.endswith(suffix):
-            true_label = label[:-len(suffix)]  # remove suffix
-            if true_label in true_labels:
-                true_index = true_labels.index(true_label)
-                node_colors[i] = node_colors[true_index]
+    palette_by_class = {
+        str(class_name).strip(): str(color).strip()
+        for class_name, color in palette_df["color"].items()
+    }
+    default_color = "#BDBDBD"
+    node_colors = [
+        palette_by_class.get(label.rstrip(), default_color)
+        for label in all_labels
+    ]
 
     def hex_to_rgba(hex_color, alpha=0.8):
         hex_color = hex_color.lstrip("#")
