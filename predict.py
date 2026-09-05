@@ -281,30 +281,29 @@ def render_form(form_id, uploader_label):
         labels=labels,
     )
 
-    if labels is not None:
-        sankey_data = pd.DataFrame({
-            "true_label": labels.iloc[:, 0],
-            "prediction_sets": predictions["prediction"],
-        })
-        with form_column:
-            st.subheader("True vs predicted subtype")
-            sankey(sankey_data, title="")
-
     with output_column:
         st.subheader("Summary")
         st.dataframe(
             prediction_sets_summary(predictions, labels),
             use_container_width=True,
             hide_index=True,
+            height=240,
         )
         st.subheader("Conformal prediction sets")
         st.dataframe(
             predictions,
             use_container_width=True,
-            height=500,
         )
         st.subheader("Conformal prediction set membership")
         upset_plot(predictions, color=plot_color)
+
+        if labels is not None:
+            sankey_data = pd.DataFrame({
+                "true_label": labels.iloc[:, 0],
+                "prediction_sets": predictions["prediction"],
+            })
+            st.subheader("True vs predicted subtype")
+            sankey(sankey_data, title="")
 
 
 render_form("prediction_form", "MLOmix-processed GEX or DNAm data")
