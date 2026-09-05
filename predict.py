@@ -18,8 +18,14 @@ st.markdown(
     """
     <style>
     body {
-        zoom: 0.8; /* 90% */
+        zoom: 0.9; /* 90% */
     }
+    .block-container {
+            padding-top: 2rem;
+            padding-bottom: 1rem;
+            padding-left: 1rem;
+            padding-right: 1rem;
+        }
     </style>
     """,
     unsafe_allow_html=True,
@@ -246,7 +252,7 @@ def render_form(form_id, uploader_label):
                 mlflow_models,
                 help="Select the model to use for prediction.",
             )
-            tolerance_column, color_column = st.columns([5, 1])
+            tolerance_column, color_column = st.columns([4, 1])
             with tolerance_column:
                 slider = st.slider("Error tolerance α", 0, 100, 5)
             with color_column:
@@ -289,7 +295,8 @@ def render_form(form_id, uploader_label):
         st.dataframe(
             prediction_sets_summary(predictions, labels),
             use_container_width=True,
-            hide_index=True
+            hide_index=True,
+            height=250
         )
 
     with output_column:
