@@ -88,6 +88,49 @@ def parse_prediction_classes(value):
     return [normalize_label(parsed)]
 
 
+def prediction_sets_summary(predictions, labels=None):
+    prediction_sets = [
+        set(parse_prediction_classes(value))
+        for value in predictions["prediction"]
+    ]
+
+    summary = [
+        {
+            "Statistic": "Certain sets (size=1)",
+            "Value": sum(len(values) == 1 for values in prediction_sets),
+        },
+        {
+            "Statistic": "Uncertain sets (size >= 2)",
+            "Value": sum(len(values) >= 2 for values in prediction_sets),
+        },
+        {
+            "Statistic": "Empty sets (size=0)",
+            "Value": sum(len(values) == 0 for values in prediction_sets),
+        },
+    ]
+
+    if labels is not None:
+        true_labels = labels.iloc[:, 0].map(normalize_label)
+        labeled_rows = true_labels != "EMPTY SET"
+        false_negatives = sum(
+            true_label not in prediction_set
+            for true_label, prediction_set, is_labeled in zip(
+                true_labels,
+                prediction_sets,
+                labeled_rows,
+            )
+            if is_labeled
+        )
+        labeled_count = int(labeled_rows.sum())
+        fnr = false_negatives / labeled_count if labeled_count else 0.0
+        summary.append({
+            "Statistic": "Overall FNR",
+            "Value": f"{fnr:.1%}",
+        })
+
+    return pd.DataFrame(summary)
+
+
 def normalize_label(value):
     EMPTY_SET_LABEL = "EMPTY SET"
     if pd.isna(value):
@@ -235,7 +278,16 @@ def render_form(form_id, uploader_label):
             sankey(sankey_data, title="True vs predicted subtypes")
 
     with output_column:
-        st.write(predictions)
+        st.dataframe(
+            prediction_sets_summary(predictions, labels),
+            use_container_width=True,
+            hide_index=True,
+        )
+        st.dataframe(
+            predictions,
+            use_container_width=True,
+            height=500,
+        )
         upset_plot(predictions, color=plot_color)
 
 
