@@ -14,6 +14,17 @@ st.set_page_config(
     layout="wide",
 )
 
+st.markdown(
+    """
+    <style>
+    body {
+        zoom: 0.8; /* 80% */
+    }
+    </style>
+    """,
+    unsafe_allow_html=True,
+)
+
 if "mlflow" not in st.session_state:
     mlflow_client = MlflowClient()
     st.session_state.mlflow = mlflow_client
@@ -124,7 +135,7 @@ def prediction_sets_summary(predictions, labels=None):
         labeled_count = int(labeled_rows.sum())
         fnr = false_negatives / labeled_count if labeled_count else 0.0
         summary.append({
-            "Statistic": "Overall FNR",
+            "Statistic": "Overall False Negative Rate (FNR)",
             "Value": f"{fnr:.1%}",
         })
 
@@ -228,13 +239,14 @@ def render_form(form_id, uploader_label):
     form_column, output_column = st.columns([1, 2], gap="large")
 
     with form_column:
+        st.subheader("Acute leukemia subtype classification")
         with st.form(form_id, border=False):
             model = st.selectbox(
                 "Select a model",
                 mlflow_models,
                 help="Select the model to use for prediction.",
             )
-            slider = st.slider("Error tolerance", 0, 100, 5)
+            slider = st.slider("Error tolerance α", 0, 100, 5)
             upload = st.file_uploader(uploader_label, type=["csv"])
             labels_upload = st.file_uploader(
                 "If subtypes are known, upload labels (optional)",
@@ -275,19 +287,23 @@ def render_form(form_id, uploader_label):
             "prediction_sets": predictions["prediction"],
         })
         with form_column:
-            sankey(sankey_data, title="True vs predicted subtypes")
+            st.subheader("True vs predicted subtype")
+            sankey(sankey_data, title="")
 
     with output_column:
+        st.subheader("Summary")
         st.dataframe(
             prediction_sets_summary(predictions, labels),
             use_container_width=True,
             hide_index=True,
         )
+        st.subheader("Conformal prediction sets")
         st.dataframe(
             predictions,
             use_container_width=True,
             height=500,
         )
+        st.subheader("Conformal prediction set membership")
         upset_plot(predictions, color=plot_color)
 
 
