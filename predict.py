@@ -228,7 +228,7 @@ def sankey(df: pd.DataFrame,
     fig.update_layout(
         title_text=title,
         title_font=dict(size=20),
-        height=700 + 40 * max(len(true_labels), len(pred_labels)),
+        height=500 + 40 * max(len(true_labels), len(pred_labels)),
         margin=dict(l=20, r=20, t=60, b=20),
         font=dict(family="Arial, sans-serif", size=16, color="black")
     )
@@ -284,19 +284,21 @@ def render_form(form_id, uploader_label):
         labels=labels,
     )
 
-    with output_column:
+    with form_column:
         st.subheader("Summary")
         st.dataframe(
             prediction_sets_summary(predictions, labels),
             use_container_width=True,
-            hide_index=True,
-            height="content",
+            hide_index=True
         )
+
+    with output_column:
         st.subheader("Conformal prediction sets")
         st.dataframe(
             predictions,
             use_container_width=True,
         )
+
         st.subheader("Conformal prediction set membership")
         upset_plot(predictions, color=plot_color)
 
