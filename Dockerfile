@@ -1,16 +1,29 @@
-FROM python:3.12-slim
+FROM python:3.12-slim-bookworm
 
-WORKDIR /app
+# Create user name and home directory variables.
+# The variables are later used as $USER and $HOME.
+ENV USER=deploy
+ENV HOME=/home/$USER
 
-RUN apt-get update \
-	&& apt-get install -y --no-install-recommends git \
-	&& rm -rf /var/lib/apt/lists/*
+# Add user to system
+RUN useradd -m -u 1000 $USER
+
+WORKDIR $HOME/app
+
+# Update system and install dependencies.
+RUN apt-get update && apt-get install --no-install-recommends -y \
+    build-essential \
+    software-properties-common \
+    git
 
 COPY requirements.txt .
 RUN pip install --no-cache-dir -r requirements.txt
 
 COPY . .
 
-EXPOSE 8000
+USER $USER
+EXPOSE 8501
 
-CMD ["streamlit", "run", "app.py", "--server.address=0.0.0.0", "--server.port=8000"]
+HEALTHCHECK CMD curl --fail http://localhost:8501/_stcore/health
+
+ENTRYPOINT ["streamlit", "run", "app.py", "--server.port=8501", "--server.address=0.0.0.0", "--browser.gatherUsageStats=false"]

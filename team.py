@@ -2,12 +2,12 @@ import streamlit as st
 
 st.title("PALLAS Contributors")
 
-st.markdown(
+st.write(
     "The following individuals have contributed to the development of "
     "PALLAS10k, the classifier powering the PALLAS Portal."
 )
 
-st.markdown(
+st.write(
     """
     Mariya Lysenkova Wiklander<sup>1,2</sup>,
     Emma Dizdarevic<sup>1,2</sup>,
