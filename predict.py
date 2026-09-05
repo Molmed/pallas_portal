@@ -111,24 +111,47 @@ def prediction_sets_summary(predictions, labels=None):
         for value in predictions["prediction"]
     ]
 
+    total_sets = len(prediction_sets)
+
+    def percentage(count):
+        return f"{count / total_sets:.1%}" if total_sets else "0.0%"
+
+    certain_count = sum(len(values) == 1 for values in prediction_sets)
+    uncertain_count = sum(len(values) >= 2 for values in prediction_sets)
+    empty_count = sum(len(values) == 0 for values in prediction_sets)
+
     summary = [
         {
             "Statistic": "Certain sets (size=1)",
-            "Value": sum(len(values) == 1 for values in prediction_sets),
+            "Total": certain_count,
+            "Percentage": percentage(certain_count),
         },
         {
             "Statistic": "Uncertain sets (size >= 2)",
-            "Value": sum(len(values) >= 2 for values in prediction_sets),
+            "Total": uncertain_count,
+            "Percentage": percentage(uncertain_count),
         },
         {
             "Statistic": "Empty sets (size=0)",
-            "Value": sum(len(values) == 0 for values in prediction_sets),
+            "Total": empty_count,
+            "Percentage": percentage(empty_count),
         },
     ]
 
+    def is_valid_label(str):
+        if str is None:
+            return False
+        # If ends in ", other" return False
+        if str.strip().lower().endswith(", other"):
+            return False
+        # If starts with "EXCLUDED" or "UNRECOGNIZED" return False
+        if str.strip().upper().startswith(("EXCLUDED", "UNRECOGNIZED")):
+            return False
+        return True
+
     if labels is not None:
         true_labels = labels.iloc[:, 0].map(normalize_label)
-        labeled_rows = true_labels != "EMPTY SET"
+        labeled_rows = true_labels.map(is_valid_label)
         false_negatives = sum(
             true_label not in prediction_set
             for true_label, prediction_set, is_labeled in zip(
@@ -142,7 +165,8 @@ def prediction_sets_summary(predictions, labels=None):
         fnr = false_negatives / labeled_count if labeled_count else 0.0
         summary.append({
             "Statistic": "Overall False Negative Rate (FNR)",
-            "Value": f"{fnr:.1%}",
+            "Total": "-",
+            "Percentage": f"{fnr:.1%}",
         })
 
     return pd.DataFrame(summary)
