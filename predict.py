@@ -18,7 +18,7 @@ st.markdown(
     """
     <style>
     body {
-        zoom: 0.8; /* 80% */
+        zoom: 0.8; /* 90% */
     }
     </style>
     """,
@@ -287,7 +287,7 @@ def render_form(form_id, uploader_label):
             prediction_sets_summary(predictions, labels),
             use_container_width=True,
             hide_index=True,
-            height=240,
+            height="content",
         )
         st.subheader("Conformal prediction sets")
         st.dataframe(
