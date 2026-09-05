@@ -200,37 +200,41 @@ def render_form(form_id, uploader_label):
             plot_color = st.color_picker("Plot color", "#9768ac")
             submitted = st.form_submit_button("Submit")
 
-    with output_column:
-        if not submitted:
-            return
+    if not submitted:
+        return
 
-        if upload is None:
+    if upload is None:
+        with form_column:
             st.error("Please upload a file.")
+        return
+
+    data = pd.read_csv(upload, index_col=0)
+
+    labels = None
+    if labels_upload is not None:
+        try:
+            labels = pd.read_csv(labels_upload, index_col=0)
+        except Exception as e:
+            with form_column:
+                st.error(f"Error reading labels file: {e}")
             return
 
-        data = pd.read_csv(upload, index_col=0)
+    predictions = mlflow_client.predict(
+        model,
+        data,
+        slider,
+        labels=labels,
+    )
 
-        labels = None
-        if labels_upload is not None:
-            try:
-                labels = pd.read_csv(labels_upload, index_col=0)
-            except Exception as e:
-                st.error(f"Error reading labels file: {e}")
-                return
-            # Build sankey
-            sankey_data = pd.DataFrame({
-                "true_label": labels.iloc[:, 0],
-                "prediction_sets": mlflow_client.predict(model, data, slider)["prediction"]
-            })
+    if labels is not None:
+        sankey_data = pd.DataFrame({
+            "true_label": labels.iloc[:, 0],
+            "prediction_sets": predictions["prediction"],
+        })
+        with form_column:
             sankey(sankey_data, title="True vs predicted subtypes")
 
-        predictions = mlflow_client.predict(
-            model,
-            data,
-            slider,
-            labels=labels,
-        )
-
+    with output_column:
         st.write(predictions)
         upset_plot(predictions, color=plot_color)
 
