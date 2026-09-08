@@ -9,7 +9,7 @@ st.write(
 
 st.write(
     """
-    Mariya Lysenkova Wiklander<sup>1,2</sup>,
+    [Mariya Lysenkova Wiklander](https://github.com/mariya)<sup>1,2</sup>,
     Emma Dizdarevic<sup>1,2</sup>,
     Dave Zachariah<sup>3</sup>,
     Olga Krali<sup>1,2</sup>,
