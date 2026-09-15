@@ -1,5 +1,10 @@
 import streamlit as st
 
+st.set_page_config(
+    page_title="PALLAS10k Portal",
+    layout="centered",
+)
+
 st.title("PALLAS10k Portal")
 
 st.markdown(

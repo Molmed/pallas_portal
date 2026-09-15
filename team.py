@@ -1,6 +1,11 @@
 import streamlit as st
 
-st.title("PALLAS Contributors")
+st.set_page_config(
+    page_title="PALLAS10k Contributors",
+    layout="centered",
+)
+
+st.title("PALLAS10k Contributors")
 
 st.write(
     "The following individuals have contributed to the development of "
