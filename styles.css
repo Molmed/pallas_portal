@@ -1,0 +1,27 @@
+div[data-testid="stSidebarNav"],
+div[data-testid="stSidebarNav"] > ul,
+.st-emotion-cache-uzxc3z {
+    border-bottom: none !important;
+}
+
+div[data-testid="stSidebarNav"] hr {
+    display: none !important;
+}
+
+.mlomix-footer {
+    position: fixed;
+    bottom: 1rem;
+    width: 14rem;
+    z-index: 1;
+}
+
+.mlomix-footer-label {
+    font-size: 0.75rem;
+    margin-bottom: 0.25rem;
+}
+
+.mlomix-footer img {
+    display: block;
+    max-width: 7rem;
+    height: auto;
+}
