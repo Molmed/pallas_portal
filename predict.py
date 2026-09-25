@@ -150,15 +150,18 @@ def prediction_sets_summary(predictions, labels=None):
         return True
 
     if labels is not None:
+        num_true_labels = 0
         negs = 0
         # Loop through each label
         for true_label, predicted_set in zip(labels.iloc[:, 0], prediction_sets):
             # If the true label is valid and not in the predicted set, increment FNR
-            if is_valid_label(true_label) and true_label not in predicted_set:
-                negs += 1
+            if is_valid_label(true_label):
+                num_true_labels += 1
+                if true_label not in predicted_set:
+                    negs += 1
 
         # Calculate the overall false negative rate (FNR)
-        fnr = negs / len(labels) if len(labels) > 0 else 0.0
+        fnr = negs / num_true_labels if num_true_labels > 0 else 0.0
 
         summary.append({
             "Statistic": "False Negative Rate (FNR)*",
